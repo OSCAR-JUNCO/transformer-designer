@@ -1,0 +1,66 @@
+@startuml 03a-api-components
+!include <C4/C4_Component>
+
+title API Server - Component Diagram (Hexagonal)
+
+Container_Ext(spa, "Web Application", "Vue 3, Vite", "Design wizard for electrical engineers")
+ContainerDb_Ext(db, "Database", "MongoDB", "Designs, standards rules and versions, blueprint files")
+
+Container_Boundary(api, "API Server") {
+
+  Container_Boundary(driving, "Driving adapters") {
+    Component(rest, "REST Handlers", "Go, OpenAPI-generated", "Maps HTTP requests to use cases and domain errors to API error codes")
+  }
+
+  Container_Boundary(app, "Application") {
+    Component(designSvc, "Design Service", "Go", "Use cases: create design, advance stage, get validation results")
+    Component(blueprintSvc, "Blueprint Service", "Go", "Use case: generate the blueprint for a design")
+  }
+
+  Container_Boundary(domain, "Domain core") {
+    Component(inputs, "Design Inputs", "Go", "Engineer's specification: ratings, voltages, and vector group (Dyn or Yyn)")
+    Component(s1, "Stage 1: Core Dimensions", "Go", "Calculates core dimensions from the design inputs")
+    Component(s2, "Stage 2: Winding Turns", "Go", "Calculates secondary turns from the vector group, then primary (high-voltage) turns")
+    Component(s3, "Stage 3: Conductor Selection", "Go", "Selects the actual conductors for fabrication, starting with the secondary")
+    Component(s4, "Stage 4: Geometric Layout", "Go", "Calculates the physical configuration of core, windings, and clearances")
+    Component(s5, "Stage 5: Impedance Values", "Go", "Calculates impedance values from the previous stages")
+    Component(stdEval, "Standards Evaluator", "Go", "Checks stage results against the pinned rule set and lists pass/fail results with clause references")
+    Component(geom, "Geometry Model", "Go", "Builds 2D drawing geometry from a completed design, independent of output format")
+  }
+
+  Container_Boundary(driven, "Driven adapters") {
+    ComponentDb(designRepo, "Design Repository", "MongoDB driver", "Persists designs, one aggregate")
+    ComponentDb(stdRepo, "Standards Repository", "MongoDB driver", "Loads versioned standards rules, one aggregate")
+    ComponentDb(bpStore, "Blueprint Store", "MongoDB GridFS", "Stores and retrieves generated blueprint files")
+    Component(pdf, "PDF Renderer", "Go PDF library", "Renders geometry to PDF")
+  }
+}
+
+Rel(spa, rest, "Calls", "HTTPS/JSON")
+
+Rel(rest, designSvc, "Invokes")
+Rel(rest, blueprintSvc, "Invokes")
+
+Rel(designSvc, inputs, "Creates from request")
+Rel(designSvc, s1, "Runs stages in order")
+Rel(s1, s2, "Passes results to")
+Rel(s2, s3, "Passes results to")
+Rel(s3, s4, "Passes results to")
+Rel(s4, s5, "Passes results to")
+Rel(s2, inputs, "Reads vector group from")
+Rel(designSvc, stdEval, "Checks results against active rules")
+Rel(designSvc, designRepo, "Loads and saves designs via port")
+
+Rel(blueprintSvc, designRepo, "Loads completed design via port")
+Rel(blueprintSvc, geom, "Builds geometry")
+Rel(blueprintSvc, pdf, "Renders geometry via port")
+Rel(blueprintSvc, bpStore, "Saves blueprint via port")
+
+Rel(stdEval, stdRepo, "Loads active rule set via port")
+
+Rel(designRepo, db, "Reads and writes", "MongoDB driver")
+Rel(stdRepo, db, "Reads", "MongoDB driver")
+Rel(bpStore, db, "Stores files", "GridFS")
+
+SHOW_LEGEND()
+@enduml

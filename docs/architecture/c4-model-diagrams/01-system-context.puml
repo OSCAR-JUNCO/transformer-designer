@@ -1,0 +1,13 @@
+@startuml 01-system-context
+!include <C4/C4_Context>
+
+title Transformer Designer - System Context
+
+Person(operator, "Electrical Engineer", "An engineer with expertise in designing electrical transformers")
+
+System(transformerDesigner, "Transformer Designer", "A software system allowing electrical engineers to design and validate transformers against standards, and generate geometric blueprints for fabrication.")
+
+Rel(operator, transformerDesigner, "Creates and validates a transformer design, and generates blueprints with")
+
+SHOW_LEGEND()
+@enduml

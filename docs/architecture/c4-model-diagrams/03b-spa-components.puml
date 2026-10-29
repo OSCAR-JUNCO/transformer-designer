@@ -1,0 +1,21 @@
+@startuml 03b-spa-components
+!include <C4/C4_Component>
+
+title Web Application - Component Diagram
+
+Container_Ext(api, "API Server", "Go, OpenAPI", "Design calculations, standards checks, blueprints")
+
+Container_Boundary(spa, "Web Application") {
+  Component(views, "Stage Views", "Vue 3 components", "One screen per design stage: inputs, results, and blueprint download")
+  Component(store, "Design State", "Pinia", "Holds the current design, stage progress, and validation results")
+  Component(client, "API Client", "Generated from OpenAPI", "Typed functions for each API endpoint")
+  Component(i18n, "Translations", "vue-i18n", "Localized labels, and messages keyed by API error codes")
+}
+
+Rel(views, store, "Reads and updates")
+Rel(views, i18n, "Gets text from")
+Rel(store, client, "Calls")
+Rel(client, api, "Sends requests", "HTTPS/JSON")
+
+SHOW_LEGEND()
+@enduml

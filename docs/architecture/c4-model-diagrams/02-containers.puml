@@ -1,0 +1,19 @@
+@startuml 02-containers
+!include <C4/C4_Container>
+
+title Transformer Designer - Container Diagram
+
+Person(operator, "Electrical Engineer", "Designs and validates transformers")
+
+System_Boundary(td, "Transformer Designer") {
+  Container(spa, "Web Application", "Vue 3, Vite, vue-i18n", "Single-page app where the engineer enters design inputs stage by stage, views validation results, and downloads blueprints")
+  Container(api, "API Server", "Go, OpenAPI", "Exposes the REST API, runs the design calculations, checks results against stored standards, and generates PDF blueprints")
+  ContainerDb(db, "Database", "MongoDB", "Stores designs, standards rules and versions, and generated blueprint PDFs")
+}
+
+Rel(operator, spa, "Designs transformers using", "HTTPS")
+Rel(spa, api, "Calls", "HTTPS/JSON, OpenAPI contract")
+Rel(api, db, "Reads and writes designs, standards, and blueprints", "MongoDB driver")
+
+SHOW_LEGEND()
+@enduml
